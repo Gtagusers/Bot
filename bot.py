@@ -24,40 +24,20 @@ bot.remove_command("help")
 async def on_ready():
     print("Bot logged in")
 
-# Giveaway command
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def gw(ctx, winner: discord.Member, duration, *, msg):
-    await ctx.message.delete()
-    int_dur = int(duration)
-    dur_mins = int_dur / 60
-    dur_hrs = dur_mins / 60
-    
-    # Embed for the giveaway
-    giveaway_embed = discord.Embed()
-    giveaway_embed.title = "Giveaway!!"
-    giveaway_embed.description = f"""__{msg}__
+# Sync slash commands (required for new commands to be available)
+@bot.event
+async def on_ready():
+    await bot.tree.sync()  # Sync commands to Discord
+    print(f'Logged in as {bot.user}')
 
-    *Make sure to **react** with ⭐ to participate in this giveaway, ends in `{dur_hrs}` hours,*
+# Slash giveaway command
+@bot.tree.command(name="gw")
+async def gw(interaction: discord.Interaction, winner: discord.Member, duration: int, msg: str):
+    # Send a confirmation that the command was received
+    await interaction.response.send_message(f"Starting giveaway for {msg} with winner {winner.mention}.")
 
-    ```Before participating we recommend you check if this giveaway has any requirements before entering.```
-    """
+    # Deleting the interaction message
+    await interaction.message.delete()
     
-    # Send the giveaway message
-    gw_msg = await ctx.send(embed=giveaway_embed)
-    await gw_msg.add_reaction("⭐")
-    
-    # Wait for the duration
-    await asyncio.sleep(int_dur)
-    
-    # Embed for the winner
-    winner_embed = discord.Embed()
-    winner_embed.title = "Congratulations!!"
-    winner_embed.description = f"<@{winner.id}> won `{msg}`"
-    
-    # Announce the winner
-    await ctx.send(f"Winner: <@{winner.id}>")
-    await ctx.send(embed=winner_embed)
-
-# Run the bot
-bot.run(TOKEN)
+    # Calculate giveaway duration
+    dur_m
