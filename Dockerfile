@@ -19,6 +19,7 @@ COPY . /app/
 
 # Install Python dependencies (using Poetry or pip)
 RUN pip install discord
-RUN pip install dotenv
+RUN pip install python-dotenv
+
 # Set the command to run your bot
 CMD ["python", "bot.py"]
