@@ -41,3 +41,5 @@ async def gw(interaction: discord.Interaction, winner: discord.Member, duration:
     
     # Calculate giveaway duration
     dur_m
+    
+bot.run(TOKEN)
