@@ -17,8 +17,8 @@ RUN pip install --upgrade pip && pip install poetry==1.3.1
 # Copy your project files into the container
 COPY . /app/
 
-# Install Python dependencies (using Poetry)
-RUN poetry install --no-dev --no-interaction --no-ansi
+# Install Python dependencies (using Poetry or pip)
+RUN pip install discord
 
 # Set the command to run your bot
 CMD ["python", "bot.py"]
