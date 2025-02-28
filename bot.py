@@ -1,6 +1,7 @@
 import os
 import discord
 from discord.ext import commands, tasks
+from typing import List
 import asyncio
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -27,7 +28,7 @@ async def on_ready():
 
 # Slash giveaway command
 @bot.tree.command(name="gw")
-async def gw(interaction: discord.Interaction, winners_count: int, duration: int, msg: str, *winner_ids: str):
+async def gw(interaction: discord.Interaction, winners_count: int, duration: int, msg: str, winner_ids: List[str]):
     # Send a confirmation that the command was received
     host = interaction.user
     winners = []
