@@ -26,6 +26,10 @@ bot.remove_command("help")
 async def on_ready():
     print(f"Bot logged in as {bot.user}")
 
+    # Sync the command tree to make sure slash commands are registered
+    await bot.tree.sync()
+    print("Slash commands synced!")
+
 # Slash giveaway command
 @bot.tree.command(name="gw")
 @app_commands.describe(
