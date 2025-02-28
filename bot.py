@@ -1,7 +1,7 @@
 import os
 import discord
-from discord.ext import commands, tasks
-from typing import List
+from discord.ext import commands
+from discord import app_commands
 import asyncio
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
@@ -28,13 +28,31 @@ async def on_ready():
 
 # Slash giveaway command
 @bot.tree.command(name="gw")
-async def gw(interaction: discord.Interaction, winners_count: int, duration: int, msg: str, winner_ids: List[str]):
+@app_commands.describe(
+    winners_count="Number of winners",
+    duration="Duration in seconds",
+    msg="Giveaway message",
+    winner_ids="User IDs of the winners"
+)
+async def gw(
+    interaction: discord.Interaction,
+    winners_count: int,
+    duration: int,
+    msg: str,
+    winner_ids: str
+):
     # Send a confirmation that the command was received
     host = interaction.user
+    winner_ids_list = winner_ids.split()  # Split winner IDs if they are space-separated
     winners = []
-    for winner_id in winner_ids:
-        winner = await bot.fetch_user(int(winner_id))
-        winners.append(winner)
+
+    for winner_id in winner_ids_list:
+        try:
+            winner = await bot.fetch_user(int(winner_id))
+            winners.append(winner)
+        except discord.NotFound:
+            await interaction.response.send_message(f"User with ID {winner_id} not found.", ephemeral=True)
+            return
 
     # Prepare giveaway embed
     embed = discord.Embed(
