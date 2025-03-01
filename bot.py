@@ -5,6 +5,7 @@ from discord import app_commands
 import asyncio
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
+import random
 
 # Load token from .env file
 load_dotenv()
@@ -25,8 +26,6 @@ bot.remove_command("help")
 @bot.event
 async def on_ready():
     print(f"Bot logged in as {bot.user}")
-
-    # Sync the command tree to make sure slash commands are registered
     await bot.tree.sync()
     print("Slash commands synced!")
 
@@ -52,13 +51,12 @@ async def gw(
     msg: str,
     winner_ids: str
 ):
-    print(f"Received /gw command, winners_count: {winners_count}, duration: {duration}, msg: {msg}, winner_ids: {winner_ids}")
-
-    # Send a confirmation that the command was received
+    # Get the host of the giveaway
     host = interaction.user
-    winner_ids_list = winner_ids.split()  # Split winner IDs if they are space-separated
-    winners = []
 
+    # Split the winner IDs by spaces and validate them
+    winner_ids_list = winner_ids.split()
+    winners = []
     for winner_id in winner_ids_list:
         try:
             winner = await bot.fetch_user(int(winner_id))
@@ -67,7 +65,7 @@ async def gw(
             await interaction.response.send_message(f"User with ID {winner_id} not found.", ephemeral=True)
             return
 
-    # Prepare giveaway embed
+    # Create the giveaway embed
     embed = discord.Embed(
         title=f"Giveaway: {msg}",
         description=f"Hosted by: {host.mention}\nNumber of Winners: {winners_count}",
@@ -80,7 +78,7 @@ async def gw(
     end_time_str = end_time.strftime("%Y-%m-%d %H:%M:%S UTC")
     embed.add_field(name="Ends At", value=end_time_str, inline=False)
 
-    # Send the giveaway embed
+    # Send the giveaway message
     giveaway_message = await interaction.channel.send(embed=embed)
 
     # Countdown task (live update)
@@ -105,16 +103,15 @@ async def gw(
         embed.set_field_at(2, name="Time Remaining", value="Giveaway ended", inline=False)
         await giveaway_message.edit(embed=embed)
 
-        # Choose winners randomly
-        import random
-        winners = random.sample([winner.mention for winner in winners], winners_count)
-        embed.add_field(name="Winner(s)", value=", ".join(winners), inline=False)
+        # Randomly select winners
+        winner_mentions = random.sample([winner.mention for winner in winners], winners_count)
+        embed.add_field(name="Winner(s)", value=", ".join(winner_mentions), inline=False)
         await giveaway_message.edit(embed=embed)
 
     # Start the countdown task
     bot.loop.create_task(countdown())
 
-    # Acknowledge command execution
+    # Acknowledge the command execution
     await interaction.response.send_message(f"Giveaway started for {msg}! Winners will be chosen in {duration} seconds.")
 
 bot.run(TOKEN)
