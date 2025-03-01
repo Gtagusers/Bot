@@ -14,14 +14,13 @@ logging.basicConfig(level=logging.DEBUG)
 load_dotenv()
 TOKEN = os.getenv("token")
 
-# Create intents and set everything to True
+# Create intents and set them to True where needed
 intents = discord.Intents.default()
 intents.messages = True        # Allows the bot to receive message events
 intents.guilds = True          # Allows the bot to receive guild-related events (e.g., joining, leaving, etc.)
 intents.members = True         # Allows the bot to receive member-related events (e.g., member join, leave, etc.)
 intents.bans = True            # Allows the bot to receive ban-related events
 intents.emojis = True          # Allows the bot to receive emoji-related events
-intents.integrations = True    # Allows the bot to receive integration-related events
 intents.webhooks = True        # Allows the bot to receive webhook-related events
 intents.invites = True         # Allows the bot to receive invite-related events
 intents.voice_states = True    # Allows the bot to receive voice state-related events
@@ -30,14 +29,10 @@ intents.reactions = True       # Allows the bot to receive reactions to messages
 intents.typing = True          # Allows the bot to receive typing-related events
 intents.guild_messages = True  # Allows the bot to receive guild message events (in addition to DM messages)
 intents.message_content = True # Allows the bot to access the content of messages (needed for content-based interactions)
-intents.guild_integrations = True # Allows the bot to access guild integrations (like webhooks and bots in guilds)
 intents.direct_messages = True # Allows the bot to receive direct messages
 intents.direct_message_reactions = True # Allows the bot to receive reactions in direct messages
 intents.direct_message_typing = True # Allows the bot to receive typing events in DMs
 intents.guild_voice_states = True # Allows the bot to listen to voice state changes in guilds
-
-# Now, to apply all intents, we set them to true
-intents.all()  # Enabling all intents at once
 
 # Create bot instance with intents
 bot = commands.Bot(command_prefix="+", case_sensitive=False, intents=intents)
