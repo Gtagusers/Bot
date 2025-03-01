@@ -30,7 +30,6 @@ intents.reactions = True       # Allows the bot to receive reactions to messages
 intents.typing = True          # Allows the bot to receive typing-related events
 intents.guild_messages = True  # Allows the bot to receive guild message events (in addition to DM messages)
 intents.message_content = True # Allows the bot to access the content of messages (needed for content-based interactions)
-intents.guild_emojis = True    # Allows the bot to receive guild emoji events
 intents.guild_integrations = True # Allows the bot to access guild integrations (like webhooks and bots in guilds)
 intents.direct_messages = True # Allows the bot to receive direct messages
 intents.direct_message_reactions = True # Allows the bot to receive reactions in direct messages
