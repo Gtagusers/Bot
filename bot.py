@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 from dotenv import load_dotenv
+import asyncio
 
 # Load the token from .env file
 load_dotenv()
@@ -21,8 +22,11 @@ bot.remove_command("help")
 @bot.event
 async def on_ready():
     print(f"Bot logged in as {bot.user}")
-    # Sync the commands (slash commands) with Discord
+
+    # Sync the slash commands globally (this might take up to 1 hour for global commands to propagate)
     await bot.tree.sync()
+
+    print("Slash commands synced globally.")
 
 # Define a /ping slash command
 @bot.tree.command(name="ping", description="Ping the bot to get its latency.")
@@ -31,7 +35,7 @@ async def ping(interaction: discord.Interaction):
     latency = round(bot.latency * 1000)  # Convert latency from seconds to milliseconds
     await interaction.response.send_message(f"Pong! 🏓 | Latency: {latency}ms")
 
-# Giveaway Command (as it was earlier, adapted for slash commands)
+# Giveaway Command
 @bot.tree.command(name="giveaway", description="Start a giveaway with a pre-selected winner and a duration.")
 @app_commands.describe(winner="The winner of the giveaway", duration="Duration in seconds", msg="The prize message")
 async def giveaway(interaction: discord.Interaction, winner: discord.Member, duration: int, msg: str):
