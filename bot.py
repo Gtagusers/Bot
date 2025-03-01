@@ -17,6 +17,7 @@ TOKEN = os.getenv("token")
 # Create intents
 intents = discord.Intents.default()
 intents.messages = True
+discord.ext.commands.bot = True
 intents.reactions = True
 intents.members = True  # Needed to fetch member information like user IDs
 
