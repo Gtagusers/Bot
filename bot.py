@@ -30,6 +30,13 @@ async def on_ready():
     await bot.tree.sync()
     print("Slash commands synced!")
 
+# Ping command to test latency and show an emoji
+@bot.tree.command(name="ping")
+async def ping(interaction: discord.Interaction):
+    latency = round(bot.latency * 1000)  # Latency in milliseconds
+    pong_emoji = "🏓"  # You can use any emoji you like
+    await interaction.response.send_message(f"{pong_emoji} Pong! Latency is {latency}ms")
+
 # Slash giveaway command
 @bot.tree.command(name="gw")
 @app_commands.describe(
@@ -45,6 +52,8 @@ async def gw(
     msg: str,
     winner_ids: str
 ):
+    print(f"Received /gw command, winners_count: {winners_count}, duration: {duration}, msg: {msg}, winner_ids: {winner_ids}")
+
     # Send a confirmation that the command was received
     host = interaction.user
     winner_ids_list = winner_ids.split()  # Split winner IDs if they are space-separated
@@ -107,13 +116,5 @@ async def gw(
 
     # Acknowledge command execution
     await interaction.response.send_message(f"Giveaway started for {msg}! Winners will be chosen in {duration} seconds.")
-
-# Slash ping command
-@bot.tree.command(name="ping")
-async def ping(interaction: discord.Interaction):
-    # Get the bot's latency
-    latency = round(bot.latency * 1000)  # Latency in milliseconds
-    # Send the response
-    await interaction.response.send_message(f"Pong! Latency is {latency}ms")
 
 bot.run(TOKEN)
