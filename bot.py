@@ -16,23 +16,7 @@ TOKEN = os.getenv("token")
 
 # Create intents and set them to True where needed
 intents = discord.Intents.default()
-intents.messages = True        # Allows the bot to receive message events
-intents.guilds = True          # Allows the bot to receive guild-related events (e.g., joining, leaving, etc.)
-intents.members = True         # Allows the bot to receive member-related events (e.g., member join, leave, etc.)
-intents.bans = True            # Allows the bot to receive ban-related events
-intents.emojis = True          # Allows the bot to receive emoji-related events
-intents.webhooks = True        # Allows the bot to receive webhook-related events
-intents.invites = True         # Allows the bot to receive invite-related events
-intents.voice_states = True    # Allows the bot to receive voice state-related events
-intents.presences = True       # Allows the bot to receive presence (status) update events
-intents.reactions = True       # Allows the bot to receive reactions to messages
-intents.typing = True          # Allows the bot to receive typing-related events
-intents.guild_messages = True  # Allows the bot to receive guild message events (in addition to DM messages)
-intents.message_content = True # Allows the bot to access the content of messages (needed for content-based interactions)
-intents.direct_messages = True # Allows the bot to receive direct messages
-intents.direct_message_reactions = True # Allows the bot to receive reactions in direct messages
-intents.direct_message_typing = True # Allows the bot to receive typing events in DMs
-intents.guild_voice_states = True # Allows the bot to listen to voice state changes in guilds
+
 
 # Create bot instance with intents
 bot = commands.Bot(command_prefix="+", case_sensitive=False, intents=intents)
