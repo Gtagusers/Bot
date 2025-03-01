@@ -1,15 +1,19 @@
 import os
 import discord
 from discord.ext import commands
-import asyncio
+from discord import app_commands
 from dotenv import load_dotenv
 
 # Load the token from .env file
 load_dotenv()
 TOKEN = os.getenv("token")
 
-# Set up the bot with a command prefix
-bot = commands.Bot(command_prefix="+", case_sensitive=False)
+# Set up intents to allow the bot to read message reactions and member updates
+intents = discord.Intents.default()
+intents.members = True  # To allow member updates (like reacting to messages)
+
+# Set up the bot with a command prefix and the intents
+bot = commands.Bot(command_prefix="+", case_sensitive=False, intents=intents)
 
 # Remove the default help command
 bot.remove_command("help")
@@ -17,15 +21,24 @@ bot.remove_command("help")
 @bot.event
 async def on_ready():
     print(f"Bot logged in as {bot.user}")
+    # Sync the commands (slash commands) with Discord
+    await bot.tree.sync()
 
-# Giveaway Command
-@bot.command()
-@commands.has_permissions(administrator=True)
-async def gw(ctx, winner: discord.Member, duration: int, *, msg: str):
+# Define a /ping slash command
+@bot.tree.command(name="ping", description="Ping the bot to get its latency.")
+async def ping(interaction: discord.Interaction):
+    """Respond to the ping command and display bot's response time."""
+    latency = round(bot.latency * 1000)  # Convert latency from seconds to milliseconds
+    await interaction.response.send_message(f"Pong! 🏓 | Latency: {latency}ms")
+
+# Giveaway Command (as it was earlier, adapted for slash commands)
+@bot.tree.command(name="giveaway", description="Start a giveaway with a pre-selected winner and a duration.")
+@app_commands.describe(winner="The winner of the giveaway", duration="Duration in seconds", msg="The prize message")
+async def giveaway(interaction: discord.Interaction, winner: discord.Member, duration: int, msg: str):
     """Start a giveaway with a set winner, duration (in seconds), and message (prize)."""
     
     # Delete the user's command message
-    await ctx.message.delete()
+    await interaction.response.defer()  # Acknowledge the command, prevent timeout
 
     # Convert the duration from seconds to hours, minutes, and seconds for display
     int_dur = int(duration)
@@ -45,7 +58,7 @@ async def gw(ctx, winner: discord.Member, duration: int, *, msg: str):
     """
     
     # Send the giveaway message
-    gw_msg = await ctx.send(embed=giveaway_embed)
+    gw_msg = await interaction.channel.send(embed=giveaway_embed)
 
     # Add the ⭐ reaction to the giveaway message
     await gw_msg.add_reaction("⭐")
@@ -62,7 +75,7 @@ async def gw(ctx, winner: discord.Member, duration: int, *, msg: str):
 
     # If there are no participants, send a message saying so
     if len(users) == 0:
-        await ctx.send(f"No one participated in the giveaway for `{msg}`.")
+        await interaction.followup.send(f"No one participated in the giveaway for `{msg}`.")
         return
 
     # Select the winner (the pre-selected winner in this case)
@@ -71,16 +84,8 @@ async def gw(ctx, winner: discord.Member, duration: int, *, msg: str):
     winner_embed.description = f"<@{winner.id}> won `{msg}`"
     
     # Announce the winner
-    await ctx.send(f"Winner: <@{winner.id}>")
-    await ctx.send(embed=winner_embed)
-
-    # Optionally, you can also DM the winner or log it in a channel if needed.
-
-# Ping Command
-@bot.command()
-async def ping(ctx):
-    """Respond to the ping command."""
-    await ctx.send("Pong! 🏓")
+    await interaction.followup.send(f"Winner: <@{winner.id}>")
+    await interaction.followup.send(embed=winner_embed)
 
 # Run the bot with the token from the .env file
 bot.run(TOKEN)
