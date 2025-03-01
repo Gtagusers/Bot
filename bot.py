@@ -14,6 +14,7 @@ TOKEN = os.getenv("token")
 intents = discord.Intents.default()
 intents.messages = True
 intents.reactions = True
+intents.message_content = True  # Ensure the bot can read messages
 
 # Create bot instance with intents
 bot = commands.Bot(command_prefix="+", case_sensitive=False, intents=intents)
@@ -45,6 +46,15 @@ async def gw(
     msg: str,
     winner_ids: str
 ):
+    # Check channel permissions
+    channel = interaction.channel
+    permissions = channel.permissions_for(interaction.guild.get_member(bot.user.id))
+
+    # Check if bot has permission to send messages and use embeds in this channel
+    if not permissions.send_messages or not permissions.embed_links:
+        await interaction.response.send_message("I don't have the necessary permissions to send messages or use embeds in this channel!", ephemeral=True)
+        return
+
     # Send a confirmation that the command was received
     host = interaction.user
     winner_ids_list = winner_ids.split()  # Split winner IDs if they are space-separated
@@ -108,4 +118,5 @@ async def gw(
     # Acknowledge command execution
     await interaction.response.send_message(f"Giveaway started for {msg}! Winners will be chosen in {duration} seconds.")
 
+# Run the bot with the token
 bot.run(TOKEN)
