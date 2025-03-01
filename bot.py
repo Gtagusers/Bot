@@ -1,156 +1,86 @@
+import os
 import discord
 from discord.ext import commands
-from discord import app_commands
 import asyncio
-import random
-from datetime import datetime, timedelta
 from dotenv import load_dotenv
-import os
 
-# Load the .env file
+# Load the token from .env file
 load_dotenv()
+TOKEN = os.getenv("token")
 
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+# Set up the bot with a command prefix
+bot = commands.Bot(command_prefix="+", case_sensitive=False)
 
-# Slash commands require syncing with Discord's API
+# Remove the default help command
+bot.remove_command("help")
+
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user}')
-    # Sync commands to make sure Discord knows them
-    await bot.tree.sync()
+    print(f"Bot logged in as {bot.user}")
 
-giveaways = {}
+# Giveaway Command
+@bot.command()
+@commands.has_permissions(administrator=True)
+async def gw(ctx, winner: discord.Member, duration: int, *, msg: str):
+    """Start a giveaway with a set winner, duration (in seconds), and message (prize)."""
+    
+    # Delete the user's command message
+    await ctx.message.delete()
 
-class Giveaway:
-    def __init__(self, channel, host, duration, num_winners, message_id, name, preselected_winner=None):
-        self.channel = channel
-        self.host = host
-        self.duration = duration
-        self.end_time = datetime.now() + timedelta(seconds=duration)
-        self.entries = set()
-        self.message_id = message_id
-        self.selected_winner = preselected_winner
-        self.num_winners = num_winners
-        self.name = name
+    # Convert the duration from seconds to hours, minutes, and seconds for display
+    int_dur = int(duration)
+    dur_hrs = int_dur // 3600  # Convert to hours
+    dur_mins = (int_dur % 3600) // 60  # Remaining minutes
+    dur_secs = int_dur % 60  # Remaining seconds
 
-    def add_entry(self, user):
-        self.entries.add(user)
+    # Create an embed message for the giveaway
+    giveaway_embed = discord.Embed()
+    giveaway_embed.title = "Giveaway!!"
+    giveaway_embed.description = f"""
+    __{msg}__
 
-    def draw_winner(self):
-        # If a winner is preselected, use that
-        if self.selected_winner:
-            self.selected_winner = [self.selected_winner]
-        elif self.num_winners == 1:
-            self.selected_winner = random.choice(list(self.entries))
-        else:
-            self.selected_winner = random.sample(list(self.entries), self.num_winners)
+    *Make sure to **react** with ⭐ to participate in this giveaway, ends in `{dur_hrs}` hours, `{dur_mins}` minutes, and `{dur_secs}` seconds.*
 
-    def is_finished(self):
-        return datetime.now() >= self.end_time
+    ```Before participating, we recommend you check if this giveaway has any requirements before entering.```
+    """
+    
+    # Send the giveaway message
+    gw_msg = await ctx.send(embed=giveaway_embed)
 
-@bot.tree.command(name="ping", description="Ping the bot and get a pong response")
-async def ping(interaction: discord.Interaction):
-    latency = round(bot.latency * 1000)  # Convert from seconds to milliseconds
-    await interaction.response.send_message(f"Pong! 🏓 Latency: {latency}ms")
+    # Add the ⭐ reaction to the giveaway message
+    await gw_msg.add_reaction("⭐")
 
-@bot.tree.command(name="start_giveaway", description="Start a giveaway with a name, duration, and number of winners")
-async def start_giveaway(interaction: discord.Interaction, name: str, duration: int, num_winners: int, host: str, preselected_winner: discord.Member = None):
-    """Starts a giveaway with a name, duration, number of winners, and an optional pre-selected winner"""
-    embed = discord.Embed(
-        title=f"Giveaway: {name}",
-        description=f"Hosted by: {host}\nReact with 🎉 to enter!\nNumber of Winners: {num_winners}",
-        color=discord.Color.blue()
-    )
-    embed.add_field(name="Time Remaining", value=str(duration) + " seconds", inline=False)
+    # Wait for the duration of the giveaway
+    await asyncio.sleep(int_dur)
 
-    message = await interaction.channel.send(embed=embed)
-    await message.add_reaction("🎉")
+    # Fetch all reactions to the message
+    reaction = discord.utils.get(gw_msg.reactions, emoji="⭐")
+    users = await reaction.users().flatten()
 
-    # Store giveaway data by name
-    giveaway = Giveaway(interaction.channel, host, duration, num_winners, message.id, name, preselected_winner)
-    giveaways[name] = giveaway
+    # Remove the bot itself from the list of users
+    users = [user for user in users if user != bot.user]
 
-    # Start countdown task
-    await countdown(giveaway)
+    # If there are no participants, send a message saying so
+    if len(users) == 0:
+        await ctx.send(f"No one participated in the giveaway for `{msg}`.")
+        return
 
-    await interaction.response.send_message(f"Giveaway '{name}' has started!", ephemeral=True)
+    # Select the winner (the pre-selected winner in this case)
+    winner_embed = discord.Embed()
+    winner_embed.title = "Congratulations!!"
+    winner_embed.description = f"<@{winner.id}> won `{msg}`"
+    
+    # Announce the winner
+    await ctx.send(f"Winner: <@{winner.id}>")
+    await ctx.send(embed=winner_embed)
 
-async def countdown(giveaway):
-    """Updates the giveaway message with the time left"""
-    while not giveaway.is_finished():
-        time_left = giveaway.end_time - datetime.now()
-        embed = discord.Embed(
-            title=f"Giveaway: {giveaway.name}",
-            description=f"Hosted by: {giveaway.host}\nReact with 🎉 to enter!\nNumber of Winners: {giveaway.num_winners}",
-            color=discord.Color.blue()
-        )
-        embed.add_field(name="Time Remaining", value=f"{str(time_left).split('.')[0]}", inline=False)
+    # Optionally, you can also DM the winner or log it in a channel if needed.
 
-        # Update the giveaway message with the countdown
-        try:
-            message = await giveaway.channel.fetch_message(giveaway.message_id)
-            await message.edit(embed=embed)
-        except discord.NotFound:
-            break
-
-        await asyncio.sleep(10)  # Update every 10 seconds
-
-    # Once time is over, draw winner
-    giveaway.draw_winner()
-    await finish_giveaway(giveaway)
-
-async def finish_giveaway(giveaway):
-    """Ends the giveaway and announces the winner(s)"""
-    embed = discord.Embed(
-        title=f"Giveaway Finished: {giveaway.name}",
-        description=f"Hosted by: {giveaway.host}\nThe giveaway has ended.",
-        color=discord.Color.green()
-    )
-    if giveaway.selected_winner:
-        if isinstance(giveaway.selected_winner, list):
-            winners = "\n".join([winner.mention for winner in giveaway.selected_winner])
-        else:
-            winners = giveaway.selected_winner.mention
-        embed.add_field(name="Winner(s)", value=winners, inline=False)
-    else:
-        embed.add_field(name="Winner(s)", value="No entries.", inline=False)
-
-    message = await giveaway.channel.fetch_message(giveaway.message_id)
-    await message.edit(embed=embed)
-
-@bot.tree.command(name="end_giveaway", description="End a giveaway early by its name")
-async def end_giveaway(interaction: discord.Interaction, giveaway_name: str):
-    """End a giveaway early and pick the winner"""
-    giveaway = giveaways.get(giveaway_name)
-    if giveaway:
-        giveaway.draw_winner()
-        await finish_giveaway(giveaway)
-        del giveaways[giveaway_name]  # Remove the giveaway from the list after finishing
-        await interaction.response.send_message(f"Giveaway '{giveaway_name}' has been ended early and winner(s) picked.", ephemeral=True)
-    else:
-        await interaction.response.send_message("Giveaway not found.", ephemeral=True)
-
-@bot.tree.command(name="cancel_giveaway", description="Cancel a giveaway before it ends")
-async def cancel_giveaway(interaction: discord.Interaction, giveaway_name: str):
-    """Cancel a giveaway entirely using the giveaway's name"""
-    if giveaway_name in giveaways:
-        del giveaways[giveaway_name]
-        await interaction.response.send_message(f"Giveaway '{giveaway_name}' has been canceled.", ephemeral=True)
-    else:
-        await interaction.response.send_message("Giveaway not found.", ephemeral=True)
-
-@bot.tree.command(name="pick_winner", description="Select a winner manually before the giveaway ends")
-async def pick_winner(interaction: discord.Interaction, giveaway_name: str, winner: discord.Member):
-    """Select a winner manually before the giveaway ends"""
-    giveaway = giveaways.get(giveaway_name)
-    if giveaway and not giveaway.is_finished():
-        giveaway.selected_winner = winner  # Set the winner manually
-        await finish_giveaway(giveaway)
-        await interaction.response.send_message(f"Winner for '{giveaway_name}' has been manually selected.", ephemeral=True)
-    else:
-        await interaction.response.send_message("This giveaway has already ended or does not exist.", ephemeral=True)
+# Ping Command
+@bot.command()
+async def ping(ctx):
+    """Respond to the ping command."""
+    await ctx.send("Pong! 🏓")
 
 # Run the bot with the token from the .env file
-bot.run(os.getenv("DISCORD_TOKEN"))
+bot.run(TOKEN)
