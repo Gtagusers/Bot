@@ -16,8 +16,7 @@ TOKEN = os.getenv("token")
 
 # Create intents and set them to True where needed
 intents = discord.Intents.default()
-discord.ext.commands.bot = true
-
+intents.messages = True
 # Create bot instance with intents
 bot = commands.Bot(command_prefix="+", case_sensitive=False, intents=intents)
 
