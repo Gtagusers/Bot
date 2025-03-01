@@ -1,3 +1,4 @@
+import logging
 import os
 import discord
 from discord.ext import commands
@@ -6,6 +7,9 @@ import asyncio
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import random
+logging.basicConfig(level=logging.DEBUG)
+
+
 
 # Load token from .env file
 load_dotenv()
