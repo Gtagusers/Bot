@@ -7,9 +7,8 @@ import asyncio
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import random
+
 logging.basicConfig(level=logging.DEBUG)
-
-
 
 # Load token from .env file
 load_dotenv()
@@ -19,6 +18,7 @@ TOKEN = os.getenv("token")
 intents = discord.Intents.default()
 intents.messages = True
 intents.reactions = True
+intents.members = True  # Needed to fetch member information like user IDs
 
 # Create bot instance with intents
 bot = commands.Bot(command_prefix="+", case_sensitive=False, intents=intents)
@@ -67,6 +67,10 @@ async def gw(
             winners.append(winner)
         except discord.NotFound:
             await interaction.response.send_message(f"User with ID {winner_id} not found.", ephemeral=True)
+            return
+        except discord.HTTPException as e:
+            logging.error(f"HTTP error fetching user {winner_id}: {str(e)}")
+            await interaction.response.send_message(f"Failed to fetch user with ID {winner_id}.", ephemeral=True)
             return
 
     # Create the giveaway embed
